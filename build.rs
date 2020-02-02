@@ -6,6 +6,19 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    let mut libunwind_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    libunwind_path.push("libunwind");
+    let need_submodule = libunwind_path.read_dir().expect("read_dir call failed").next().is_none();
+    //check and update submodules
+    if need_submodule {
+        Command::new("git").current_dir(&Path::new("./libunwind").canonicalize().unwrap())
+            .arg("submodule")
+            .arg("init").status().unwrap();
+        Command::new("git").current_dir(&Path::new("./libunwind").canonicalize().unwrap())
+            .arg("submodule")
+            .arg("update").status().unwrap();
+    }
+
     let target = env::var("TARGET").unwrap();
     let host  = env::var("HOST").unwrap();
     let split:Vec<&str> = target.split('-').collect();
