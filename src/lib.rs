@@ -1,3 +1,10 @@
+//! Low-level bindings for the [libunwind] library.
+//!
+//! Please see the libunwind  [C API documentation] for function descriptions.
+//!
+//! [libunwind]: http://www.nongnu.org/libunwind/
+//! [C API documentation]: https://www.nongnu.org/libunwind/docs.html
+
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
