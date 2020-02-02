@@ -38,7 +38,6 @@ mod tests {
             let libc_path = CString::new(libc_path_buf.to_str().unwrap()).unwrap();
             let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
 
-            println!("{:#?}\n{:#?}\n{:#?}",test_callstack_path,libc_path, core_path);
             let asp = _Ux86_64_create_addr_space(&mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
@@ -53,7 +52,7 @@ mod tests {
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
@@ -91,7 +90,7 @@ mod tests {
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
@@ -129,7 +128,7 @@ mod tests {
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
