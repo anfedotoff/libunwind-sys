@@ -1,3 +1,4 @@
+[![crates.io](https://img.shields.io/crates/v/libunwind-sys.svg)](https://crates.io/crates/libunwind-sys)
 # libunwind-sys
 
 This Rust crate provides low-level bindings for the [libunwind] library.
