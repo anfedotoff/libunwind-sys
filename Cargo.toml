@@ -11,6 +11,7 @@ keywords = [ "ffi", "backtrace"]
 repository = "https://github.com/xcoldhandsx/libunwind-sys.git"
 homepage = "https://github.com/xcoldhandsx/libunwind-sys.git"
 license = "MIT"
+exclude = ["/data"]
 
 [dependencies]
 libc = "0.2.66"
