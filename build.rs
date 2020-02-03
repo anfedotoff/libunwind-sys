@@ -1,15 +1,19 @@
 extern crate bindgen;
+extern crate fs_extra;
 
 use std::env;
 use std::path::PathBuf;
-use std::path::Path;
 use std::process::Command;
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut libunwind_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let mut libunwind_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     libunwind_path.push("libunwind");
-
+    let project_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let _e = fs_extra::dir::create(libunwind_path.clone(),true);
+    let options = fs_extra::dir::CopyOptions::new();
+    fs_extra::dir::copy(project_dir.join("libunwind"), out_dir.clone(), &options).unwrap();
+    
     let target = env::var("TARGET").unwrap();
     let host  = env::var("HOST").unwrap();
     let split:Vec<&str> = target.split('-').collect();
@@ -40,26 +44,26 @@ fn main() {
         return;
     }
     //build C libunwind
-    Command::new(libunwind_path.join("autogen.sh")).current_dir(&out_dir).status().unwrap();
+    Command::new(libunwind_path.join("autogen.sh")).current_dir(&libunwind_path).status().unwrap();
     //configure. Check if we compile for  x86 target on x86_64 host
     if link_lib_arch == "x86" && host.contains("x86_64") {
-        Command::new(libunwind_path.join("configure")).current_dir(&out_dir)
+        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
             .arg("CFLAGS=-m32")
             .arg(&format!("--target={}",target))
             .arg(&format!("--host={}",target)).status().unwrap();
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
-        Command::new(libunwind_path.join("configure")).current_dir(&out_dir)
+        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
             .arg("CC=arm-linux-gnueabi-gcc")
             .arg(&format!("--target={}",target))
             .arg(&format!("--host={}",target))
             .arg("--disable-tests").status().unwrap();
     }
     else {
-        Command::new(libunwind_path.join("configure")).current_dir(&out_dir).arg(&format!("--target={}",target)).status().unwrap();
+        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path).arg(&format!("--target={}",target)).status().unwrap();
     }
 
-    let status = Command::new("make").current_dir(&out_dir).status().expect("failed to execute make");
+    let status = Command::new("make").current_dir(&libunwind_path).status().expect("failed to execute make");
     if !status.success() {
         println!("cargo:warning=build is failed");
         return;

@@ -18,3 +18,4 @@ libc = "0.2.66"
 
 [build-dependencies]
 bindgen = "0.52.0"
+fs_extra = "1.1.0"
