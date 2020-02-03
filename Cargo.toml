@@ -1,6 +1,6 @@
 [package]
 name = "libunwind-sys"
-version = "0.1.22"
+version = "0.1.2"
 authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>" ]
 edition = "2018"
 build = "build.rs"
