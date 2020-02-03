@@ -6,6 +6,7 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let mut libunwind_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     libunwind_path.push("libunwind");
 
@@ -39,26 +40,26 @@ fn main() {
         return;
     }
     //build C libunwind
-    Command::new("./autogen.sh").current_dir(&Path::new("./libunwind").canonicalize().unwrap()).status().unwrap();
+    Command::new(libunwind_path.join("autogen.sh")).current_dir(&out_dir).status().unwrap();
     //configure. Check if we compile for  x86 target on x86_64 host
     if link_lib_arch == "x86" && host.contains("x86_64") {
-        Command::new("./configure").current_dir(&Path::new("./libunwind").canonicalize().unwrap())
+        Command::new(libunwind_path.join("configure")).current_dir(&out_dir)
             .arg("CFLAGS=-m32")
             .arg(&format!("--target={}",target))
             .arg(&format!("--host={}",target)).status().unwrap();
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
-        Command::new("./configure").current_dir(&Path::new("./libunwind").canonicalize().unwrap())
+        Command::new(libunwind_path.join("configure")).current_dir(&out_dir)
             .arg("CC=arm-linux-gnueabi-gcc")
             .arg(&format!("--target={}",target))
             .arg(&format!("--host={}",target))
             .arg("--disable-tests").status().unwrap();
     }
     else {
-        Command::new("./configure").current_dir(&Path::new("./libunwind").canonicalize().unwrap()).arg(&format!("--target={}",target)).status().unwrap();
+        Command::new(libunwind_path.join("configure")).current_dir(&out_dir).arg(&format!("--target={}",target)).status().unwrap();
     }
 
-    let status = Command::new("make").current_dir(&Path::new("./libunwind").canonicalize().unwrap()).status().expect("failed to execute make");
+    let status = Command::new("make").current_dir(&out_dir).status().expect("failed to execute make");
     if !status.success() {
         println!("cargo:warning=build is failed");
         return;
@@ -78,9 +79,8 @@ fn main() {
         .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
 
