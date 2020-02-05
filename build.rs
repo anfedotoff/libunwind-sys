@@ -50,31 +50,38 @@ fn main() {
         Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
             .arg("CFLAGS=-m32")
             .arg(&format!("--target={}",target))
-            .arg(&format!("--host={}",target)).status().unwrap();
+            .arg(&format!("--host={}",target))
+            .arg("--disable-documentation").status().unwrap();
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
         Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
             .arg("CC=arm-linux-gnueabi-gcc")
             .arg(&format!("--target={}",target))
             .arg(&format!("--host={}",target))
-            .arg("--disable-tests").status().unwrap();
+            .arg("--disable-tests")
+            .arg("--disable-documentation").status().unwrap();
     }
     else {
-        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path).arg(&format!("--target={}",target)).status().unwrap();
+        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
+            .arg(&format!("--target={}",target))
+            .status().unwrap();
     }
 
-    let status = Command::new("make").current_dir(&libunwind_path).status().expect("failed to execute make");
-    if !status.success() {
-        println!("cargo:warning=build is failed");
-        return;
-    }
+    Command::new("make").current_dir(&libunwind_path).arg("-j$(nproc)").status().expect("failed to execute make");
+    
     println!("cargo:rustc-link-lib{}=unwind-coredump",link_lib_abi);
     println!("cargo:rustc-link-lib{}=unwind-{}",link_lib_abi,link_lib_arch);
 
+    //choose header
+    let wrapper =  if link_lib_arch == "arm" && host.contains("x86_64") {
+        "wrapper-arm.h"
+    } else {
+        "wrapper.h"
+    };
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .header("libunwind/include/libunwind-coredump.h")
+        .header(project_dir.join(wrapper).to_str().unwrap())
         //include directory
         .clang_arg("-Ilibunwind/include")
         // Finish the builder and generate the bindings.

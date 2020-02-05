@@ -4,11 +4,19 @@
 This Rust crate provides low-level bindings for the [libunwind] library.
 It has the following limitations:
 
-* only x86/x86_64 targets are supported for now;
+*  x86/x86_64/arm targets are supported for now;
 * tests are provided only for x86_64 target;
-* arm target is in progress.
 
 [libunwind]: https://www.nongnu.org/libunwind/
+
+## Installation
+
+Add this crate to your `Cargo.toml`:
+
+```toml
+[dependencies]
+libunwind-sys = "0.1.3"
+```
 ## License
 
 This crate is licensed under the [MIT license].
