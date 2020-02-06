@@ -46,18 +46,23 @@ mod tests {
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut backtrace = String::new();
            loop {
            _Ux86_64_get_reg(c.as_mut_ptr(), unw_frame_regnum_t_UNW_REG_IP as ::std::os::raw::c_int, &mut ip);
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
            }
+           assert!(backtrace.contains("main"), true);
+           assert!(backtrace.contains("first"), true);
+           assert!(backtrace.contains("second"), true);
+           assert!(backtrace.contains("third"), true);
         }
     }
     #[test]
@@ -84,18 +89,22 @@ mod tests {
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut backtrace = String::new();
            loop {
            _Ux86_64_get_reg(c.as_mut_ptr(), unw_frame_regnum_t_UNW_REG_IP as ::std::os::raw::c_int, &mut ip);
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
            }
+           println!("{}", backtrace);
+           assert!(backtrace.contains("main"), true);
+           assert!(backtrace.contains("cfree"), true);
         }
     }
     #[test]
@@ -122,18 +131,21 @@ mod tests {
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut backtrace = String::new();
            loop {
            _Ux86_64_get_reg(c.as_mut_ptr(), unw_frame_regnum_t_UNW_REG_IP as ::std::os::raw::c_int, &mut ip);
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              //println!("0x{:x} in {:?} ()", ip, name.to_str().unwrap());
+              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
               ret = _Ux86_64_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
            }
+           assert!(backtrace.contains("main"), true);
+           assert!(backtrace.contains("fortify_fail"), true);
         }
     }
 }
