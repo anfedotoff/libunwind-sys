@@ -21,6 +21,11 @@ mod tests {
     use std::mem::MaybeUninit; 
     use std::path::PathBuf;
     use std::process::Command;
+    use libc::c_void;
+    use std::ptr;
+    use std::thread;
+    use std::time::Duration;
+    use std::io;
 
     #[test]
     #[cfg(target_arch = "x86_64")]
@@ -187,8 +192,30 @@ mod tests {
             let mut test_callstack_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             test_callstack_path_buf.push("data/test_callstack_remote");
             let mut child = Command::new(test_callstack_path_buf.to_str().unwrap())
-               .spawn()
-               .expect("failed to execute child");
+                .spawn()
+                .expect("failed to execute child");
+             thread::sleep(Duration::from_millis(10));
+            let ret = libc::ptrace(
+                libc::PTRACE_ATTACH,
+                child.id() as libc::pid_t,
+                ptr::null_mut::<c_void>(),
+                ptr::null_mut::<c_void>(),
+            );
+            if ret != 0 {
+                panic!("{}", io::Error::last_os_error());
+            }
+
+            loop {
+                let mut status = 0;
+                let ret = libc::waitpid(child.id() as libc::pid_t, &mut status, 0);
+                if ret < 0 {
+                    panic!("{}", io::Error::last_os_error());
+                }
+                if libc::WIFSTOPPED(status) {
+                    break;
+                }
+            }
+        
             let ui: *mut ::std::os::raw::c_void = _UPT_create(child.id() as i32);
             let mut backtrace = String::new();
 
@@ -200,13 +227,18 @@ mod tests {
                 _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
                 let name = CStr::from_ptr(name_vec.as_mut_ptr());
                 backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-                _Ux86_64_step(c.as_mut_ptr());
+               ret =  _Ux86_64_step(c.as_mut_ptr());
                 if ret <= 0 {
                     break;
                 }
             }
+            assert!(backtrace.contains("main"), true);
+            assert!(backtrace.contains("first"), true);
+            assert!(backtrace.contains("second"), true);
+            assert!(backtrace.contains("third"), true);
             _UPT_destroy(ui);
             _Ux86_64_destroy_addr_space(asp);
+            child.kill().unwrap();
         }
     }
 }
