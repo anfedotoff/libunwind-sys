@@ -1,6 +1,8 @@
 extern crate bindgen;
 extern crate fs_extra;
+extern crate autotools;
 
+use autotools::Config;
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
@@ -16,62 +18,52 @@ fn main() {
     
     let target = env::var("TARGET").unwrap();
     let host  = env::var("HOST").unwrap();
-    let split:Vec<&str> = target.split('-').collect();
-    let arch = split[0];
-    let sys = split[2];
-    let abi = split[3];
-    //check system libunwind library for linux only
-    if sys != "linux" {
-        println!("cargo:warning=libunwind supports only Linux");
-        return;
-    }
     
-    //set include directory
-    println!("cargo:rustc-link-search=libunwind/src/.libs");
-
     //choose build
-    let (link_lib_arch,link_lib_abi) = match (arch, abi) {
-        ("x86_64","gnu") => ("x86_64",""),
-        ("x86_64","musl") => ("x86_64","=static"),
-        ("i586","gnu")|("i686","gnu") => ("x86",""),
-        ("i586","musl")|("i686","musl") => ("x86","=static"),
-        ("arm", "gnueabi")|("armv7", "gnueabi") => ("arm",""),
-        ("arm", "musleabi")|("armv7", "musleabi") => ("arm","=static"),
-        _ => ("","")
+    let link_lib_arch = match target.as_str() {
+        "x86_64-unknown-linux-gnu" => "x86_64",
+        "i686-unknown-linux-gnu"|"i586-unknown-linux-gnu"  => "x86",
+        "arm-unknown-linux-gnueabi"|"armv7-unknown-linux-gnueabi"|
+        "arm-unknown-linux-gnueabihf"|"armv7-unknown-linux-gnueabihf" => "arm",
+        _ => ""
     };
     if link_lib_arch.is_empty() {
         println!("cargo:warning=target {} is unsupported",target);
         return;
     }
     //build C libunwind
-    Command::new(libunwind_path.join("autogen.sh")).current_dir(&libunwind_path).status().unwrap();
+    let _autogen = Command::new("sh").current_dir(&libunwind_path)
+                                     .arg("-c")
+                                     .arg(format!("autoreconf --force --install --verbose {}",&libunwind_path.to_str().unwrap()))
+                                     .output()
+                                     .expect("failed to run autoreconf, do you have the autotools installed?");
     //configure. Check if we compile for  x86 target on x86_64 host
-    if link_lib_arch == "x86" && host.contains("x86_64") {
-        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
-            .arg("CFLAGS=-m32")
-            .arg(&format!("--target={}",target))
-            .arg(&format!("--host={}",target))
-            .arg("--disable-documentation").status().unwrap();
+    let dst = if link_lib_arch == "x86" && host.contains("x86_64") {
+        Config::new(&libunwind_path)
+            .cflag("-m32")
+            .target(&target)
+            .host(&target)
+            .enable_shared().build()
+
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
-        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
-            .arg("CC=arm-linux-gnueabi-gcc")
-            .arg(&format!("--target={}",target))
-            .arg(&format!("--host={}",target))
-            .arg("--disable-tests")
-            .arg("--disable-documentation").status().unwrap();
+        Config::new(&libunwind_path)
+            .env("CC","arm-linux-gnueabi-gcc")
+            .target(&target)
+            .host(&target)
+            .disable("documentation", None)
+            .disable("tests", None)
+            .enable_shared().build()
     }
     else {
-        Command::new(libunwind_path.join("configure")).current_dir(&libunwind_path)
-            .arg(&format!("--target={}",target))
-            .status().unwrap();
-    }
-
-    Command::new("make").current_dir(&libunwind_path).arg("-j$(nproc)").status().expect("failed to execute make");
+       Config::new(&libunwind_path).enable_shared().build()
+    };
     
-    println!("cargo:rustc-link-lib{}=unwind-coredump",link_lib_abi);
-    println!("cargo:rustc-link-lib{}=unwind-{}",link_lib_abi,link_lib_arch);
-
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=unwind-coredump");
+    println!("cargo:rustc-link-lib=unwind-{}",link_lib_arch);
+    println!("cargo:rustc-link-lib=unwind");
+    println!("cargo:rustc-link-lib=unwind-ptrace");
     //choose header
     let wrapper =  if link_lib_arch == "arm" && host.contains("x86_64") {
         "wrapper-arm.h"
