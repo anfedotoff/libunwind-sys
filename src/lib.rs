@@ -20,6 +20,7 @@ mod tests {
     use std::ffi::CString;
     use std::mem::MaybeUninit; 
     use std::path::PathBuf;
+    use std::process::Command;
 
     #[test]
     #[cfg(target_arch = "x86_64")]
@@ -146,6 +147,66 @@ mod tests {
            }
            assert!(backtrace.contains("main"), true);
            assert!(backtrace.contains("fortify_fail"), true);
+        }
+    }
+    #[test]
+    #[cfg(target_arch = "x86_64")]
+    fn test_local_unwind() {
+        unsafe {
+            let mut c  = MaybeUninit::uninit();
+            let mut uc  = MaybeUninit::uninit();
+            let mut ip: unw_word_t = 0;
+            let mut ret = _Ux86_64_getcontext(uc.as_mut_ptr());
+            ret = _Ux86_64_init_local(c.as_mut_ptr(),uc.as_mut_ptr()); 
+            let mut backtrace = String::new();
+            loop {
+                _Ux86_64_get_reg(c.as_mut_ptr(), unw_frame_regnum_t_UNW_REG_IP as ::std::os::raw::c_int, &mut ip);
+                let mut off  = MaybeUninit::uninit();
+                let mut name_vec:Vec<c_char> = vec![0;64];
+                _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
+                let name = CStr::from_ptr(name_vec.as_mut_ptr());
+                backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
+                ret = _Ux86_64_step(c.as_mut_ptr());
+                if ret <= 0 {
+                    break;
+                }
+            }
+            assert!(backtrace.contains("__rust_maybe_catch_panic"), true);
+            assert!(backtrace.contains("start_thread"), true);
+        }
+    }
+    
+    #[test]
+    #[cfg(target_arch = "x86_64")]
+    fn test_remote_unwind() {
+        unsafe {
+            let mut c  = MaybeUninit::uninit();
+            let mut ip: unw_word_t = 0;
+            let asp = _Ux86_64_create_addr_space(&mut _UPT_accessors ,0);
+            //spawn child proccess
+            let mut test_callstack_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            test_callstack_path_buf.push("data/test_callstack_remote");
+            let mut child = Command::new(test_callstack_path_buf.to_str().unwrap())
+               .spawn()
+               .expect("failed to execute child");
+            let ui: *mut ::std::os::raw::c_void = _UPT_create(child.id() as i32);
+            let mut backtrace = String::new();
+
+            let mut ret = _Ux86_64_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            loop {
+                _Ux86_64_get_reg(c.as_mut_ptr(), unw_frame_regnum_t_UNW_REG_IP as ::std::os::raw::c_int, &mut ip);
+                let mut off  = MaybeUninit::uninit();
+                let mut name_vec:Vec<c_char> = vec![0;64];
+                _Ux86_64_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
+                let name = CStr::from_ptr(name_vec.as_mut_ptr());
+                backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
+                _Ux86_64_step(c.as_mut_ptr());
+                if ret <= 0 {
+                    break;
+                }
+            }
+            _UPT_destroy(ui);
+            _Ux86_64_destroy_addr_space(asp);
         }
     }
 }
