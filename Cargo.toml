@@ -1,13 +1,13 @@
 [package]
 name = "libunwind-sys"
-version = "0.2.0"
+version = "0.2.1"
 authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>" ]
 edition = "2018"
 build = "build.rs"
 categories = [ "external-ffi-bindings" ]
 description = "Low-level bindings for the libunwind library"
 readme = "README.md"
-keywords = [ "ffi", "backtrace"]
+keywords = [ "ffi", "backtrace","stactrace","coredump"]
 repository = "https://github.com/xcoldhandsx/libunwind-sys.git"
 homepage = "https://github.com/xcoldhandsx/libunwind-sys.git"
 license = "MIT"

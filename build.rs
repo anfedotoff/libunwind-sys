@@ -23,7 +23,6 @@ fn main() {
     let link_lib_arch = match target.as_str() {
         "x86_64-unknown-linux-gnu" => "x86_64",
         "i686-unknown-linux-gnu"|"i586-unknown-linux-gnu"  => "x86",
-        "arm-unknown-linux-gnueabi"|"armv7-unknown-linux-gnueabi"|
         "arm-unknown-linux-gnueabihf"|"armv7-unknown-linux-gnueabihf" => "arm",
         _ => ""
     };
@@ -43,12 +42,14 @@ fn main() {
             .cflag("-m32")
             .target(&target)
             .host(&target)
+            .disable("documentation", None)
+            .disable("tests", None)
             .enable_shared().build()
 
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
         Config::new(&libunwind_path)
-            .env("CC","arm-linux-gnueabi-gcc")
+            .env("CC","arm-linux-gnueabihf-gcc")
             .target(&target)
             .host(&target)
             .disable("documentation", None)
@@ -56,7 +57,7 @@ fn main() {
             .enable_shared().build()
     }
     else {
-       Config::new(&libunwind_path).enable_shared().build()
+       Config::new(&libunwind_path).disable("documentation", None).disable("tests", None).enable_shared().build()
     };
     
     println!("cargo:rustc-link-search=native={}/lib", dst.display());

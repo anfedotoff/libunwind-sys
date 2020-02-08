@@ -7,9 +7,7 @@ Supported targets:
 * x86_64-unknown-linux-gnu;
 * i686-unknown-linux-gnu;
 * i586-unknown-linux-gnu;
-* arm-unknown-linux-gnueabi;
 * arm-unknown-linux-gnueabihf;
-* armv7-unknown-linux-gnueabi;
 * armv7-unknown-linux-gnueabihf.
 
 Tests are provided only for x86_64 target.
@@ -22,7 +20,7 @@ First, compile `libunwind` as a shared library and install it. Add this crate to
 
 ```toml
 [dependencies]
-libunwind-sys = "0.2.0"
+libunwind-sys = "0.2.1"
 ```
 ## License
 
