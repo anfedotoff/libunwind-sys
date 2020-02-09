@@ -65,24 +65,40 @@ fn main() {
     println!("cargo:rustc-link-lib=unwind-{}",link_lib_arch);
     println!("cargo:rustc-link-lib=unwind");
     println!("cargo:rustc-link-lib=unwind-ptrace");
+
     //choose header
     let wrapper =  if link_lib_arch == "arm" && host.contains("x86_64") {
         "wrapper-arm.h"
     } else {
         "wrapper.h"
     };
-    let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
-        .header(project_dir.join(wrapper).to_str().unwrap())
-        //include directory
-        .clang_arg("-Ilibunwind/include")
-        // Finish the builder and generate the bindings.
-        .generate()
-        // Unwrap the Result and panic on failure.
-        .expect("Unable to generate bindings");
+    let bindings = match link_lib_arch {
+        "x86" => {
+            bindgen::Builder::default()
+                .header(project_dir.join(wrapper).to_str().unwrap())
+                .clang_arg("-Ilibunwind/include")
+                .blacklist_function("_Ux86_.*")
+                .generate()
+                .expect("Unable to generate bindings")
+        },
+        "arm" => {
+            bindgen::Builder::default()
+                .header(project_dir.join(wrapper).to_str().unwrap())
+                .clang_arg("-Ilibunwind/include")
+                .blacklist_function("_Uarm_.*")
+                .generate()
+                .expect("Unable to generate bindings")
+        },
+        _=> {
+            bindgen::Builder::default()
+                .header(project_dir.join(wrapper).to_str().unwrap())
+                .clang_arg("-Ilibunwind/include")
+                .blacklist_function("_Ux86_64_.*")
+                .generate()
+                .expect("Unable to generate bindings")
+        }
+    };
 
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
     bindings
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");
