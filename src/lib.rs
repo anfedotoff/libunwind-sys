@@ -55,20 +55,27 @@ mod tests {
             let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
-            let mut ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
             _UCD_add_backing_file_at_vaddr(ui, test_callstack_start, test_callstack_path.as_ptr());
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut sp: unw_word_t = 0;
+           let mut val: unw_word_t = 0;
            let mut backtrace = String::new();
            loop {
               unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
+              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
+              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
+              if ret < 0 {
+                  assert!(false);
+              }
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
               backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              ret = unw_step(c.as_mut_ptr());
+              let ret = unw_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
@@ -98,20 +105,27 @@ mod tests {
             let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
-            let mut ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
             _UCD_add_backing_file_at_vaddr(ui, test_heap_start, test_heap_path.as_ptr());
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut sp: unw_word_t = 0;
+           let mut val: unw_word_t = 0;
            let mut backtrace = String::new();
            loop {
               unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
+              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
+              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
+              if ret < 0 {
+                  assert!(false);
+              }
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
               backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              ret = unw_step(c.as_mut_ptr());
+              let ret = unw_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
@@ -140,20 +154,27 @@ mod tests {
             let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
-            let mut ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
             _UCD_add_backing_file_at_vaddr(ui, test_canary_start, test_canary_path.as_ptr());
             
             _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
+           let mut sp: unw_word_t = 0;
+           let mut val: unw_word_t = 0;
            let mut backtrace = String::new();
            loop {
-           unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
+              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
+              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
+              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
+              if ret < 0 {
+                  assert!(false);
+              }
               let mut off  = MaybeUninit::uninit();
               let mut name_vec:Vec<c_char> = vec![0;64];
               unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
               let name = CStr::from_ptr(name_vec.as_mut_ptr());
               backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              ret = unw_step(c.as_mut_ptr());
+              let ret = unw_step(c.as_mut_ptr());
               if ret <= 0 {
                   break;
               }
@@ -169,8 +190,8 @@ mod tests {
             let mut c  = MaybeUninit::uninit();
             let mut uc  = MaybeUninit::uninit();
             let mut ip: unw_word_t = 0;
-            let mut ret = unw_getcontext(uc.as_mut_ptr());
-            ret = unw_init_local(c.as_mut_ptr(),uc.as_mut_ptr()); 
+            let _ret = unw_getcontext(uc.as_mut_ptr());
+            let _ret = unw_init_local(c.as_mut_ptr(),uc.as_mut_ptr()); 
             let mut backtrace = String::new();
             loop {
                 unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
@@ -179,7 +200,7 @@ mod tests {
                 unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
                 let name = CStr::from_ptr(name_vec.as_mut_ptr());
                 backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-                ret = unw_step(c.as_mut_ptr());
+                let ret = unw_step(c.as_mut_ptr());
                 if ret <= 0 {
                     break;
                 }
@@ -227,7 +248,7 @@ mod tests {
             let ui: *mut ::std::os::raw::c_void = _UPT_create(child.id() as i32);
             let mut backtrace = String::new();
 
-            let mut ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
             loop {
                 unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
                 let mut off  = MaybeUninit::uninit();
@@ -235,7 +256,7 @@ mod tests {
                 unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
                 let name = CStr::from_ptr(name_vec.as_mut_ptr());
                 backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-               ret =  unw_step(c.as_mut_ptr());
+                let ret =  unw_step(c.as_mut_ptr());
                 if ret <= 0 {
                     break;
                 }
