@@ -37,34 +37,44 @@ fn main() {
                                      .output()
                                      .expect("failed to run autoreconf, do you have the autotools installed?");
     //configure. Check if we compile for  x86 target on x86_64 host
-    let dst = if link_lib_arch == "x86" && host.contains("x86_64") {
-        Config::new(&libunwind_path)
-            .cflag("-m32")
+    let mut dst = Config::new(&libunwind_path);
+    if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+        dst.disable("ptrace", None);
+    } else {
+        println!("cargo:warning=ptrace-on");
+        dst.enable("ptrace", None);
+    }
+
+    if link_lib_arch == "x86" && host.contains("x86_64") {
+            dst.cflag("-m32")
             .target(&target)
             .host(&target)
             .disable("documentation", None)
             .disable("tests", None)
-            .enable_shared().build()
+            .enable_shared();
 
     //configure. Check if we compile for  arm target on x86_64 host
     } else  if link_lib_arch == "arm" && host.contains("x86_64") {
-        Config::new(&libunwind_path)
-            .env("CC","arm-linux-gnueabihf-gcc")
+
+            dst.env("CC","arm-linux-gnueabihf-gcc")
             .target(&target)
             .host(&target)
             .disable("documentation", None)
             .disable("tests", None)
-            .enable_shared().build()
+            .enable_shared();
     }
     else {
-       Config::new(&libunwind_path).disable("documentation", None).disable("tests", None).enable_shared().build()
-    };
+       dst.disable("documentation", None).disable("tests", None).enable_shared();
+    }
     
+    let dst = dst.build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=unwind-coredump");
     println!("cargo:rustc-link-lib=unwind-{}",link_lib_arch);
     println!("cargo:rustc-link-lib=unwind");
-    println!("cargo:rustc-link-lib=unwind-ptrace");
+    if env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+        println!("cargo:rustc-link-lib=unwind-ptrace");
+    }
 
     //choose header
     let wrapper =  if link_lib_arch == "arm" && host.contains("x86_64") {
@@ -78,27 +88,27 @@ fn main() {
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
                 .blacklist_function("_Ux86_.*")
-                .generate()
-                .expect("Unable to generate bindings")
         },
         "arm" => {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
                 .blacklist_function("_Uarm_.*")
-                .generate()
-                .expect("Unable to generate bindings")
         },
         _=> {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
                 .blacklist_function("_Ux86_64_.*")
-                .generate()
-                .expect("Unable to generate bindings")
         }
     };
 
+    let bindings = if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+                bindings.blacklist_function("_UPT_.*").blacklist_item("_UPT_.*")
+    } else {
+                bindings
+    };
+    let bindings = bindings.generate().expect("Unable to generate bindings");
     bindings
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");

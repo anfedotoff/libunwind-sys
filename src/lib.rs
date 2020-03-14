@@ -211,7 +211,7 @@ mod tests {
     }
     
     #[test]
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(all(feature = "ptrace", target_arch = "x86_64"))]
     fn test_remote_unwind() {
         unsafe {
             let mut c  = MaybeUninit::uninit();

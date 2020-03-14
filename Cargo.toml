@@ -1,6 +1,6 @@
 [package]
 name = "libunwind-sys"
-version = "0.3.0"
+version = "0.4.0"
 authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>" ]
 edition = "2018"
 build = "build.rs"
@@ -13,6 +13,8 @@ homepage = "https://github.com/xcoldhandsx/libunwind-sys.git"
 license = "MIT"
 exclude = ["/data"]
 
+[features]
+ptrace = []
 [dependencies]
 libc = "0.2.66"
 
@@ -20,3 +22,4 @@ libc = "0.2.66"
 bindgen = "0.52.0"
 fs_extra = "1.1.0"
 autotools = "0.2"
+
