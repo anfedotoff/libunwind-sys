@@ -130,7 +130,6 @@ mod tests {
                   break;
               }
            }
-           println!("{}", backtrace);
            assert!(backtrace.contains("main"), true);
            assert!(backtrace.contains("cfree"), true);
         }
@@ -205,8 +204,9 @@ mod tests {
                     break;
                 }
             }
+            println!("{}", backtrace);
             assert!(backtrace.contains("__rust_maybe_catch_panic"), true);
-            assert!(backtrace.contains("start_thread"), true);
+            assert!(backtrace.contains("start_thread") || backtrace.contains("start"), true);
         }
     }
     

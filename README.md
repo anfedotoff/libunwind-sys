@@ -8,7 +8,7 @@ Supported targets:
 * i686-unknown-linux-gnu;
 * i586-unknown-linux-gnu;
 * arm-unknown-linux-gnueabihf;
-* armv7-unknown-linux-gnueabihf.
+* x86_64-unknown-linux-musl.
 
 Tests are provided only for x86_64 target.
 
@@ -20,13 +20,10 @@ First, compile `libunwind` as a shared library and install it. Add this crate to
 
 ```toml
 [dependencies]
-libunwind-sys = "0.4.0"
+libunwind-sys = "0.5.0"
 ```
 ## License
 
 This crate is licensed under the [MIT license].
 
 [MIT license]: LICENSE
-
-## TODO
-Support more targets.

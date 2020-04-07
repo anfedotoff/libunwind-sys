@@ -21,9 +21,9 @@ fn main() {
     
     //choose build
     let link_lib_arch = match target.as_str() {
-        "x86_64-unknown-linux-gnu" => "x86_64",
+        "x86_64-unknown-linux-gnu"| "x86_64-unknown-linux-musl" => "x86_64",
         "i686-unknown-linux-gnu"|"i586-unknown-linux-gnu"  => "x86",
-        "arm-unknown-linux-gnueabihf"|"armv7-unknown-linux-gnueabihf" => "arm",
+        "arm-unknown-linux-gnueabihf" => "arm",
         _ => ""
     };
     if link_lib_arch.is_empty() {
@@ -64,16 +64,28 @@ fn main() {
             .enable_shared();
     }
     else {
-       dst.disable("documentation", None).disable("tests", None).enable_shared();
+       dst.disable("documentation", None).disable("tests", None).enable_shared().enable_static();
     }
-    
     let dst = dst.build();
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=unwind-coredump");
-    println!("cargo:rustc-link-lib=unwind-{}",link_lib_arch);
-    println!("cargo:rustc-link-lib=unwind");
-    if env::var_os("CARGO_FEATURE_PTRACE").is_some() {
-        println!("cargo:rustc-link-lib=unwind-ptrace");
+    println!("cargo:rustc-link-search={}/lib", dst.display());
+    if target.contains("musl") {
+        println!("cargo:rustc-link-search=/usr/lib/x86_64-linux-gnu");
+        println!("cargo:rustc-link-lib=static=lzma");
+        println!("cargo:rustc-link-lib=static=unwind-{}",link_lib_arch);
+        println!("cargo:rustc-link-lib=static=unwind");
+        println!("cargo:rustc-link-lib=static=unwind-coredump");
+        
+        if env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+            println!("cargo:rustc-link-lib=static=unwind-ptrace");
+        }
+    } else {
+        println!("cargo:rustc-link-lib=unwind-{}",link_lib_arch);
+        println!("cargo:rustc-link-lib=unwind");
+        println!("cargo:rustc-link-lib=unwind-coredump");
+
+        if env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+            println!("cargo:rustc-link-lib=unwind-ptrace");
+        }
     }
 
     //choose header
