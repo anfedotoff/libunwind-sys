@@ -10,7 +10,7 @@ Supported targets:
 * arm-unknown-linux-gnueabihf;
 * x86_64-unknown-linux-musl.
 
-Tests are provided only for x86_64 target.
+Tests are provided only for x86_64-unknown-linux-gnu target.
 
 [libunwind]: https://www.nongnu.org/libunwind/
 
@@ -20,7 +20,7 @@ First, compile `libunwind` as a shared library and install it. Add this crate to
 
 ```toml
 [dependencies]
-libunwind-sys = "0.5.0"
+libunwind-sys = "0.5.1"
 ```
 ## License
 
