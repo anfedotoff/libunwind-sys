@@ -30,24 +30,25 @@ fn main() {
         println!("cargo:warning=target {} is unsupported",target);
         return;
     }
-    // Build libunwind.
-    let _autogen = Command::new("sh").current_dir(&libunwind_path)
+
+    // Build native C library only for x86 and arm targets on x86_64 host.
+    if link_lib_arch == "x86" || link_lib_arch == "arm " {
+
+        // Build libunwind.
+        let _autogen = Command::new("sh").current_dir(&libunwind_path)
                                      .arg("-c")
                                      .arg(format!("autoreconf --force --install --verbose {}",&libunwind_path.to_str().unwrap()))
                                      .output()
                                      .expect("failed to run autoreconf, do you have the autotools installed?");
 
-    // Configure. Check if we compile for  x86 target on x86_64 host.
-    let mut dst = Config::new(&libunwind_path);
-    if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
-        dst.disable("ptrace", None);
-    } else {
-        println!("cargo:warning=ptrace-on");
-        dst.enable("ptrace", None);
-    }
-
-    // Build native C library only for x86 and arm targets on x86_64 host.
-    if link_lib_arch == "x86" || link_lib_arch == "arm " {
+        // Configure. Check if we compile for  x86 target on x86_64 host.
+        let mut dst = Config::new(&libunwind_path);
+        if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+            dst.disable("ptrace", None);
+        } else {
+            println!("cargo:warning=ptrace-on");
+            dst.enable("ptrace", None);
+        }
 
         if link_lib_arch == "x86" && host.contains("x86_64") {
             dst.cflag("-m32")
