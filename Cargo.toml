@@ -1,25 +1,27 @@
 [package]
-name = "libunwind-sys"
+name = "another-libunwind-sys"
 version = "0.5.1"
-authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>" ]
+authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>", "Keao Yang <yangkeao@chunibyo.icu>" ]
 edition = "2018"
 build = "build.rs"
 categories = [ "external-ffi-bindings" ]
 description = "Low-level bindings for the libunwind library"
 readme = "README.md"
 keywords = [ "ffi", "backtrace","stacktrace","coredump"]
-repository = "https://github.com/xcoldhandsx/libunwind-sys.git"
+repository = "https://github.com/YangKeao/libunwind-sys.git"
 homepage = "https://github.com/xcoldhandsx/libunwind-sys.git"
 license = "MIT"
-exclude = ["/data"]
 
 [features]
 ptrace = []
+dynamic = []
+static = []
+
 [dependencies]
-libc = "0.2.66"
+libc = "0.2"
 
 [build-dependencies]
-bindgen = "0.52.0"
-fs_extra = "1.1.0"
+bindgen = "0.59"
+fs_extra = "1.1"
 autotools = "0.2"
-
+cfg-if = "1.0"

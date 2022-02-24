@@ -1,3 +1,0 @@
-[submodule "libunwind"]
-	path = libunwind
-	url = https://github.com/libunwind/libunwind.git
