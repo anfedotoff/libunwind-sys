@@ -50,27 +50,8 @@ fn main() {
             dst.enable("ptrace", None);
         }
 
-        if link_lib_arch == "x86" && host.contains("x86_64") {
-            dst.cflag("-m32")
-            .target(&target)
-            .host(&target)
-            .disable("documentation", None)
-            .disable("tests", None)
-            .enable_shared();
-
-        // Configure. Check if we compile for  arm target on x86_64 host
-        } else  if link_lib_arch == "arm" && host.contains("x86_64") {
-
-            dst.env("CC","arm-linux-gnueabihf-gcc")
-            .target(&target)
-            .host(&target)
-            .disable("documentation", None)
-            .disable("tests", None)
-            .enable_shared();
-        }
-        else {
         dst.disable("documentation", None).disable("tests", None).enable_shared().enable_static();
-        }
+
         let dst = dst.build();
         println!("cargo:rustc-link-search={}/lib", dst.display());
     }
@@ -106,24 +87,24 @@ fn main() {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
-                .blacklist_function("_Ux86_.*")
+                .blocklist_function("_Ux86_.*")
         },
         "arm" => {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
-                .blacklist_function("_Uarm_.*")
+                .blocklist_function("_Uarm_.*")
         },
         _=> {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
                 .clang_arg("-Ilibunwind/include")
-                .blacklist_function("_Ux86_64_.*")
+                .blocklist_function("_Ux86_64_.*")
         }
     };
 
     let bindings = if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
-                bindings.blacklist_function("_UPT_.*").blacklist_item("_UPT_.*")
+                bindings.blocklist_function("_UPT_.*").blocklist_item("_UPT_.*")
     } else {
                 bindings
     };
@@ -132,4 +113,3 @@ fn main() {
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
-
