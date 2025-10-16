@@ -80,10 +80,10 @@ mod tests {
                   break;
               }
            }
-           assert!(backtrace.contains("main"), true);
-           assert!(backtrace.contains("first"), true);
-           assert!(backtrace.contains("second"), true);
-           assert!(backtrace.contains("third"), true);
+           assert!(backtrace.contains("main"));
+           assert!(backtrace.contains("first"));
+           assert!(backtrace.contains("second"));
+           assert!(backtrace.contains("third"));
         }
     }
     #[test]
@@ -130,8 +130,8 @@ mod tests {
                   break;
               }
            }
-           assert!(backtrace.contains("main"), true);
-           assert!(backtrace.contains("cfree"), true);
+           assert!(backtrace.contains("main"));
+           assert!(backtrace.contains("cfree"));
         }
     }
     #[test]
@@ -178,8 +178,8 @@ mod tests {
                   break;
               }
            }
-           assert!(backtrace.contains("main"), true);
-           assert!(backtrace.contains("fortify_fail"), true);
+           assert!(backtrace.contains("main"));
+           assert!(backtrace.contains("fortify_fail"));
         }
     }
     #[test]
@@ -204,9 +204,8 @@ mod tests {
                     break;
                 }
             }
-            println!("{}", backtrace);
-            assert!(backtrace.contains("test_local_unwind"), true);
-            assert!(backtrace.contains("start_thread") || backtrace.contains("start"), true);
+            assert!(backtrace.contains("test_local_unwind"));
+            assert!(backtrace.contains("start_thread") || backtrace.contains("start"));
         }
     }
 
@@ -261,10 +260,10 @@ mod tests {
                     break;
                 }
             }
-            assert!(backtrace.contains("main"), true);
-            assert!(backtrace.contains("first"), true);
-            assert!(backtrace.contains("second"), true);
-            assert!(backtrace.contains("third"), true);
+            assert!(backtrace.contains("main"));
+            assert!(backtrace.contains("first"));
+            assert!(backtrace.contains("second"));
+            assert!(backtrace.contains("third"));
             _UPT_destroy(ui);
             unw_destroy_addr_space(asp);
             child.kill().unwrap();
