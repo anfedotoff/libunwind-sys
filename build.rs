@@ -31,30 +31,27 @@ fn main() {
         return;
     }
 
-    // Build native C library only for x86 and arm targets on x86_64 host.
-    if link_lib_arch == "x86" || link_lib_arch == "arm " {
 
-        // Build libunwind.
-        let _autogen = Command::new("sh").current_dir(&libunwind_path)
-                                     .arg("-c")
-                                     .arg(format!("autoreconf --force --install --verbose {}",&libunwind_path.to_str().unwrap()))
-                                     .output()
-                                     .expect("failed to run autoreconf, do you have the autotools installed?");
+    // Build libunwind.
+    let _autogen = Command::new("sh").current_dir(&libunwind_path)
+                                 .arg("-c")
+                                 .arg(format!("autoreconf --force --install --verbose {}",&libunwind_path.to_str().unwrap()))
+                                 .output()
+                                 .expect("failed to run autoreconf, do you have the autotools installed?");
 
-        // Configure. Check if we compile for  x86 target on x86_64 host.
-        let mut dst = Config::new(&libunwind_path);
-        if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
-            dst.disable("ptrace", None);
-        } else {
-            println!("cargo:warning=ptrace-on");
-            dst.enable("ptrace", None);
-        }
+    // Configure. Check if we compile for  x86 target on x86_64 host.
+    let mut dst = Config::new(&libunwind_path);
+    if !env::var_os("CARGO_FEATURE_PTRACE").is_some() {
+        dst.disable("ptrace", None);
+    } else {
+        println!("cargo:warning=ptrace-on");
+        dst.enable("ptrace", None);
+    }
 
-        dst.disable("documentation", None).disable("tests", None).enable_shared().enable_static();
+    dst.disable("documentation", None).disable("tests", None).enable_shared().enable_static();
 
         let dst = dst.build();
         println!("cargo:rustc-link-search={}/lib", dst.display());
-    }
 
     if target.contains("musl") {
         println!("cargo:rustc-link-search=/usr/lib/x86_64-linux-gnu");
@@ -82,23 +79,24 @@ fn main() {
     } else {
         "wrapper.h"
     };
+    let include_opt = format!("-I{}/include",out_dir.to_str().unwrap());
     let bindings = match link_lib_arch {
         "x86" => {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
-                .clang_arg("-Ilibunwind/include")
+                .clang_arg(&include_opt)
                 .blocklist_function("_Ux86_.*")
         },
         "arm" => {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
-                .clang_arg("-Ilibunwind/include")
+                .clang_arg(&include_opt)
                 .blocklist_function("_Uarm_.*")
         },
         _=> {
             bindgen::Builder::default()
                 .header(project_dir.join(wrapper).to_str().unwrap())
-                .clang_arg("-Ilibunwind/include")
+                .clang_arg(&include_opt)
                 .blocklist_function("_Ux86_64_.*")
         }
     };

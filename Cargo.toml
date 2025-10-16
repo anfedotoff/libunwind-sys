@@ -2,7 +2,7 @@
 name = "libunwind-sys"
 version = "0.5.1"
 authors = [ "Andrey Fedotov  <fedotoff@ispras.ru>" ]
-edition = "2018"
+edition = "2021"
 build = "build.rs"
 categories = [ "external-ffi-bindings" ]
 description = "Low-level bindings for the libunwind library"
@@ -16,10 +16,9 @@ exclude = ["/data"]
 [features]
 ptrace = []
 [dependencies]
-libc = "^0.2"
+libc = "0.2"
 
 [build-dependencies]
-bindgen = "^0.64"
-fs_extra = "^1.3"
-autotools = "^0.2"
-
+bindgen = "0.72"
+fs_extra = "1.3"
+autotools = "0.2"
