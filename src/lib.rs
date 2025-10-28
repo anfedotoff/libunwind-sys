@@ -24,140 +24,84 @@ mod tests {
 
     use crate::*;
     use libc::c_char;
-    use std::ffi::CStr;
-    use std::ffi::CString;
+    use std::ffi::{CStr, CString};
     use std::mem::MaybeUninit;
     use std::path::PathBuf;
+
+    unsafe fn unwind_core_dump(core_file_name: &str) -> String {
+        let mut core_path_buf = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        core_path_buf.push(format!("data/{}", core_file_name));
+
+        let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
+
+        let asp = unw_create_addr_space(&raw mut _UCD_accessors, 0);
+        let ui: *mut UCD_info = _UCD_create(core_path.as_ptr());
+        let mut c = MaybeUninit::uninit();
+        let _ret = unw_init_remote(c.as_mut_ptr(), asp, ui as *mut libc::c_void);
+
+        let mut ip: unw_word_t = 0;
+        let mut sp: unw_word_t = 0;
+        let mut val: unw_word_t = 0;
+        let mut backtrace = String::new();
+
+        loop {
+            unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
+            unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
+            let ret = _UCD_access_mem(asp, sp, &mut val, 0, ui as *mut libc::c_void);
+            if ret < 0 {
+                assert!(false);
+            }
+            let mut off = MaybeUninit::uninit();
+            let mut name_vec: Vec<c_char> = vec![0; 64];
+            unw_get_proc_name(
+                c.as_mut_ptr(),
+                name_vec.as_mut_ptr(),
+                64,
+                off.as_mut_ptr(),
+            );
+            let name = CStr::from_ptr(name_vec.as_mut_ptr());
+            backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
+            let ret = unw_step(c.as_mut_ptr());
+            if ret <= 0 {
+                break;
+            }
+        }
+
+        backtrace
+    }
 
     #[test]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind() {
         unsafe {
-            let mut libc_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            libc_path_buf.push("data/libc-2.23.so");
-            let mut test_callstack_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            test_callstack_path_buf.push("data/test_callstack");
-            let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            core_path_buf.push("data/core.test_callstack");
-
-            let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
-
-            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
-            let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
-            let mut c  = MaybeUninit::uninit();
-            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-
-           let mut ip: unw_word_t = 0;
-           let mut sp: unw_word_t = 0;
-           let mut val: unw_word_t = 0;
-           let mut backtrace = String::new();
-           loop {
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
-              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
-              if ret < 0 {
-                  assert!(false);
-              }
-              let mut off  = MaybeUninit::uninit();
-              let mut name_vec:Vec<c_char> = vec![0;64];
-              unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
-              let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              let ret = unw_step(c.as_mut_ptr());
-              if ret <= 0 {
-                  break;
-              }
-           }
-           assert!(backtrace.contains("main"));
-           assert!(backtrace.contains("first"));
-           assert!(backtrace.contains("second"));
-           assert!(backtrace.contains("third"));
+            let backtrace = unwind_core_dump("core.test_callstack");
+            assert!(backtrace.contains("main"));
+            assert!(backtrace.contains("first"));
+            assert!(backtrace.contains("second"));
+            assert!(backtrace.contains("third"));
         }
     }
+
     #[test]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_heap_error() {
         unsafe {
-            let mut libc_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            libc_path_buf.push("data/libc-2.23.so");
-            let mut test_heap_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            test_heap_path_buf.push("data/test_heapError");
-            let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            core_path_buf.push("data/core.test_heapError");
-
-            let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
-            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
-            let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
-            let mut c  = MaybeUninit::uninit();
-            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-
-           let mut ip: unw_word_t = 0;
-           let mut sp: unw_word_t = 0;
-           let mut val: unw_word_t = 0;
-           let mut backtrace = String::new();
-           loop {
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
-              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
-              if ret < 0 {
-                  assert!(false);
-              }
-              let mut off  = MaybeUninit::uninit();
-              let mut name_vec:Vec<c_char> = vec![0;64];
-              unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
-              let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              let ret = unw_step(c.as_mut_ptr());
-              if ret <= 0 {
-                  break;
-              }
-           }
-           assert!(backtrace.contains("main"));
-           assert!(backtrace.contains("cfree"));
+            let backtrace = unwind_core_dump("core.test_heapError");
+            assert!(backtrace.contains("main"));
+            assert!(backtrace.contains("cfree"));
         }
     }
+
     #[test]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_canary() {
         unsafe {
-            let mut libc_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            libc_path_buf.push("data/libc-2.23.so");
-            let mut test_canary_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            test_canary_path_buf.push("data/test_canary");
-            let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            core_path_buf.push("data/core.test_canary");
-
-            let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
-            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
-            let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
-            let mut c  = MaybeUninit::uninit();
-            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-
-           let mut ip: unw_word_t = 0;
-           let mut sp: unw_word_t = 0;
-           let mut val: unw_word_t = 0;
-           let mut backtrace = String::new();
-           loop {
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-              unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
-              let ret = _UCD_access_mem(asp, sp, &mut val, 0,ui as * mut libc::c_void);
-              if ret < 0 {
-                  assert!(false);
-              }
-              let mut off  = MaybeUninit::uninit();
-              let mut name_vec:Vec<c_char> = vec![0;64];
-              unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
-              let name = CStr::from_ptr(name_vec.as_mut_ptr());
-              backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-              let ret = unw_step(c.as_mut_ptr());
-              if ret <= 0 {
-                  break;
-              }
-           }
-           assert!(backtrace.contains("main"));
-           assert!(backtrace.contains("fortify_fail"));
+            let backtrace = unwind_core_dump("core.test_canary");
+            assert!(backtrace.contains("main"));
+            assert!(backtrace.contains("fortify_fail"));
         }
     }
+
     #[test]
     #[cfg(target_arch = "x86_64")]
     fn test_local_unwind() {
