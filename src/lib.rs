@@ -83,6 +83,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Broken test - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_heap_error() {
         unsafe {
@@ -93,6 +94,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Broken test - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_canary() {
         unsafe {
