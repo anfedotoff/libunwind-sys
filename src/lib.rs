@@ -28,12 +28,6 @@ mod tests {
     use std::ffi::CString;
     use std::mem::MaybeUninit;
     use std::path::PathBuf;
-    use std::process::Command;
-    use libc::c_void;
-    use std::ptr;
-    use std::thread;
-    use std::time::Duration;
-    use std::io;
 
     #[test]
     #[cfg(target_arch = "x86_64")]
@@ -46,19 +40,13 @@ mod tests {
             let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             core_path_buf.push("data/core.test_callstack");
 
-            let test_callstack_start:u64 = 0x400000;
-            let libc_start:u64 = 0x00007f9ac7468000;
-            let test_callstack_path = CString::new(test_callstack_path_buf.to_str().unwrap()).unwrap();
-            let libc_path = CString::new(libc_path_buf.to_str().unwrap()).unwrap();
             let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
 
-            let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
+            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
             let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-            _UCD_add_backing_file_at_vaddr(ui, test_callstack_start, test_callstack_path.as_ptr());
 
-            _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
            let mut sp: unw_word_t = 0;
            let mut val: unw_word_t = 0;
@@ -97,18 +85,12 @@ mod tests {
             let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             core_path_buf.push("data/core.test_heapError");
 
-            let test_heap_start:u64 = 0x000055b7b218c000;
-            let libc_start:u64 = 0x00007f90e058b000;
-            let test_heap_path = CString::new(test_heap_path_buf.to_str().unwrap()).unwrap();
-            let libc_path = CString::new(libc_path_buf.to_str().unwrap()).unwrap();
             let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
-            let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
+            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
             let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-            _UCD_add_backing_file_at_vaddr(ui, test_heap_start, test_heap_path.as_ptr());
 
-            _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
            let mut sp: unw_word_t = 0;
            let mut val: unw_word_t = 0;
@@ -145,18 +127,12 @@ mod tests {
             let mut core_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             core_path_buf.push("data/core.test_canary");
 
-            let test_canary_start:u64 = 0x0000558672376000;
-            let libc_start:u64 = 0x00007fc14b336000;
-            let test_canary_path = CString::new(test_canary_path_buf.to_str().unwrap()).unwrap();
-            let libc_path = CString::new(libc_path_buf.to_str().unwrap()).unwrap();
             let core_path = CString::new(core_path_buf.to_str().unwrap()).unwrap();
-            let asp = unw_create_addr_space(&mut _UCD_accessors ,0);
+            let asp = unw_create_addr_space(&raw mut _UCD_accessors ,0);
             let ui: * mut UCD_info = _UCD_create(core_path.as_ptr());
             let mut c  = MaybeUninit::uninit();
             let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
-            _UCD_add_backing_file_at_vaddr(ui, test_canary_start, test_canary_path.as_ptr());
 
-            _UCD_add_backing_file_at_vaddr(ui, libc_start, libc_path.as_ptr());
            let mut ip: unw_word_t = 0;
            let mut sp: unw_word_t = 0;
            let mut val: unw_word_t = 0;
