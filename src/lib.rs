@@ -45,20 +45,23 @@ mod tests {
         let mut backtrace = String::new();
 
         loop {
-            unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-            unw_get_reg(c.as_mut_ptr(), UNW_TDEP_SP as ::std::os::raw::c_int, &mut sp);
+            unw_get_reg(
+                c.as_mut_ptr(),
+                UNW_TDEP_IP as ::std::os::raw::c_int,
+                &mut ip,
+            );
+            unw_get_reg(
+                c.as_mut_ptr(),
+                UNW_TDEP_SP as ::std::os::raw::c_int,
+                &mut sp,
+            );
             let ret = _UCD_access_mem(asp, sp, &mut val, 0, ui as *mut libc::c_void);
             if ret < 0 {
                 assert!(false);
             }
             let mut off = MaybeUninit::uninit();
             let mut name_vec: Vec<c_char> = vec![0; 64];
-            unw_get_proc_name(
-                c.as_mut_ptr(),
-                name_vec.as_mut_ptr(),
-                64,
-                off.as_mut_ptr(),
-            );
+            unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(), 64, off.as_mut_ptr());
             let name = CStr::from_ptr(name_vec.as_mut_ptr());
             backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
             let ret = unw_step(c.as_mut_ptr());
@@ -83,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Broken test - can't unwind coredump without backing files"]
+    #[ignore = "broken - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_heap_error() {
         unsafe {
@@ -94,7 +97,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Broken test - can't unwind coredump without backing files"]
+    #[ignore = "broken - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_canary() {
         unsafe {
@@ -108,17 +111,21 @@ mod tests {
     #[cfg(target_arch = "x86_64")]
     fn test_local_unwind() {
         unsafe {
-            let mut c  = MaybeUninit::uninit();
-            let mut uc  = MaybeUninit::uninit();
+            let mut c = MaybeUninit::uninit();
+            let mut uc = MaybeUninit::uninit();
             let mut ip: unw_word_t = 0;
             let _ret = unw_getcontext(uc.as_mut_ptr());
-            let _ret = unw_init_local(c.as_mut_ptr(),uc.as_mut_ptr());
+            let _ret = unw_init_local(c.as_mut_ptr(), uc.as_mut_ptr());
             let mut backtrace = String::new();
             loop {
-                unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-                let mut off  = MaybeUninit::uninit();
-                let mut name_vec:Vec<c_char> = vec![0;64];
-                unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
+                unw_get_reg(
+                    c.as_mut_ptr(),
+                    UNW_TDEP_IP as ::std::os::raw::c_int,
+                    &mut ip,
+                );
+                let mut off = MaybeUninit::uninit();
+                let mut name_vec: Vec<c_char> = vec![0; 64];
+                unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(), 64, off.as_mut_ptr());
                 let name = CStr::from_ptr(name_vec.as_mut_ptr());
                 backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
                 let ret = unw_step(c.as_mut_ptr());
@@ -135,16 +142,16 @@ mod tests {
     #[cfg(all(feature = "ptrace", target_arch = "x86_64"))]
     fn test_remote_unwind() {
         unsafe {
-            let mut c  = MaybeUninit::uninit();
+            let mut c = MaybeUninit::uninit();
             let mut ip: unw_word_t = 0;
-            let asp = unw_create_addr_space(&mut _UPT_accessors ,0);
+            let asp = unw_create_addr_space(&mut _UPT_accessors, 0);
             //spawn child proccess
-            let mut test_callstack_path_buf  = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            let mut test_callstack_path_buf = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             test_callstack_path_buf.push("data/test_callstack_remote");
             let mut child = Command::new(test_callstack_path_buf.to_str().unwrap())
                 .spawn()
                 .expect("failed to execute child");
-             thread::sleep(Duration::from_millis(10));
+            thread::sleep(Duration::from_millis(10));
             let ret = libc::ptrace(
                 libc::PTRACE_ATTACH,
                 child.id() as libc::pid_t,
@@ -169,15 +176,19 @@ mod tests {
             let ui: *mut ::std::os::raw::c_void = _UPT_create(child.id() as i32);
             let mut backtrace = String::new();
 
-            let _ret = unw_init_remote(c.as_mut_ptr(),asp,ui as * mut libc::c_void );
+            let _ret = unw_init_remote(c.as_mut_ptr(), asp, ui as *mut libc::c_void);
             loop {
-                unw_get_reg(c.as_mut_ptr(), UNW_TDEP_IP as ::std::os::raw::c_int, &mut ip);
-                let mut off  = MaybeUninit::uninit();
-                let mut name_vec:Vec<c_char> = vec![0;64];
-                unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(),64, off.as_mut_ptr());
+                unw_get_reg(
+                    c.as_mut_ptr(),
+                    UNW_TDEP_IP as ::std::os::raw::c_int,
+                    &mut ip,
+                );
+                let mut off = MaybeUninit::uninit();
+                let mut name_vec: Vec<c_char> = vec![0; 64];
+                unw_get_proc_name(c.as_mut_ptr(), name_vec.as_mut_ptr(), 64, off.as_mut_ptr());
                 let name = CStr::from_ptr(name_vec.as_mut_ptr());
                 backtrace.push_str(&format!("0x{:x} in {:?} ()\n", ip, name.to_str().unwrap()));
-                let ret =  unw_step(c.as_mut_ptr());
+                let ret = unw_step(c.as_mut_ptr());
                 if ret <= 0 {
                     break;
                 }
