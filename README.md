@@ -20,7 +20,7 @@ First, compile `libunwind` as a shared library and install it. Add this crate to
 
 ```toml
 [dependencies]
-libunwind-sys = "0.5.1"
+libunwind-sys = "0.6.0"
 ```
 ## License
 
