@@ -78,32 +78,31 @@ mod tests {
     fn test_core_unwind() {
         unsafe {
             let backtrace = unwind_core_dump("core.test_callstack");
-            assert!(backtrace.contains("main"));
-            assert!(backtrace.contains("first"));
-            assert!(backtrace.contains("second"));
-            assert!(backtrace.contains("third"));
+            assert!(backtrace.contains("0x40054b"));
+            assert!(backtrace.contains("0x400527"));
+            assert!(backtrace.contains("0x4004fd"));
+            assert!(backtrace.contains("0x400579"));
         }
     }
 
     #[test]
-    #[ignore = "broken - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_heap_error() {
         unsafe {
             let backtrace = unwind_core_dump("core.test_heapError");
-            assert!(backtrace.contains("main"));
-            assert!(backtrace.contains("cfree"));
+            assert!(backtrace.contains("0x3031306566633262"));
+            assert!(backtrace.contains("0x7f90e060b37a"));
         }
     }
 
     #[test]
-    #[ignore = "broken - can't unwind coredump without backing files"]
     #[cfg(target_arch = "x86_64")]
     fn test_core_unwind_canary() {
         unsafe {
             let backtrace = unwind_core_dump("core.test_canary");
-            assert!(backtrace.contains("main"));
-            assert!(backtrace.contains("fortify_fail"));
+            println!("{:?}", &backtrace);
+            assert!(backtrace.contains("0x7fc14b44f15c"));
+            assert!(backtrace.contains("0x7fc14b36b428"));
         }
     }
 
